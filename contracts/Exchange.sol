@@ -12,10 +12,10 @@ contract Exchange {
     uint exchangeRate;
 
     // I just want to create constructor, in this case i need something to initialize
-    string public _name;
+    string public m_name;
 
     constructor() public {
-        _name = "Simple Exchange";
+        m_name = "Simple Exchange";
         exchangeRate = 2;
     }
 
@@ -43,11 +43,38 @@ contract Exchange {
         return true;
     }
 
-    function getBalanceOfExchangebleTocken(address account) external view returns(uint) {
+    function sendMyTocken(address from, address to, uint amount) public returns (bool success) {
+        uint neededAmount = amount.mul(exchangeRate);
+
+        require(exchangebleTocken.balanceOf(to) >= neededAmount, "You don't have enough exchangeble tocken");
+        require(myTocken.balanceOf(from) >= amount, "This amount of mytocken is not avaliable");
+
+        exchangebleTocken.transferFrom(to, from, neededAmount);
+        myTocken.transferFrom(from, to, amount);
+        return true;
+    }
+
+    function sendExchangebleTocken(address from, address to, uint amount) public returns (bool success) {
+        uint neededAmount = amount.mul(exchangeRate);
+        address wallet  = from;
+        require(exchangebleTocken.balanceOf(wallet) >= neededAmount, "We don't have enough exchangeble tocken");
+        require(myTocken.balanceOf(msg.sender) >= amount, "You don't have enough mytocken");
+
+        exchangebleTocken.transferFrom(wallet, msg.sender, neededAmount);
+        myTocken.transferFrom(msg.sender, wallet, amount);
+        return true;
+    }
+
+    function getBalanceOfExchangebleTocken(address account) public view returns(uint) {
         return exchangebleTocken.balanceOf(account);
     }
 
-    function getBalanceOfMyTocken(address account) external view returns(uint) {
-        return myTocken.balanceOf(account);
+    function getBalanceOfMyTocken(address account) public view returns(uint) {
+        uint result = myTocken.balanceOf(account);
+        return result;
+    }
+
+    function getName() public view returns(string memory) {
+        return m_name;
     }
 }

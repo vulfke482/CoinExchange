@@ -10,7 +10,8 @@ contract OtherFixedSupplyTocken is ERC20Tocken {
         decimals = 18;
 
         _totalSupply = 1000000 * 10**uint(decimals);
-
+        
+        balances[msg.sender] = _totalSupply;
     }
 
 }
