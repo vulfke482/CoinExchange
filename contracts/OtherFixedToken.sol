@@ -1,8 +1,8 @@
 pragma solidity ^0.5.0;
 
-import {ERC20Tocken} from "./Tocken.sol";
+import {ERC20Token} from "./Token.sol";
 
-contract OtherFixedSupplyTocken is ERC20Tocken {
+contract OtherFixedSupplyToken is ERC20Token {
 
 
     constructor() public {

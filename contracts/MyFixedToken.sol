@@ -1,9 +1,9 @@
 pragma solidity ^0.5.0;
 
-import {ERC20Tocken} from "./Tocken.sol";
+import {ERC20Token} from "./Token.sol";
 import {SafeMath} from "./SafeMath.sol";
 
-contract MyFixedSupplyTocken is ERC20Tocken {
+contract MyFixedSupplyToken is ERC20Token {
 
     string public symbol;
 

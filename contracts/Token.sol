@@ -9,7 +9,7 @@ contract ApproveAndCallFallBack {
 
 }
 
-contract ERC20Tocken {
+contract ERC20Token {
     using SafeMath for uint;
 
 
@@ -34,7 +34,7 @@ contract ERC20Tocken {
     }
 
     function balanceOf(address tokenOwner) public view returns (uint balance) {
-
+        
         return balances[tokenOwner];
 
     }
