@@ -1,23 +1,21 @@
 const SafeMath = artifacts.require("SafeMath");
 const ERC20Token = artifacts.require("ERC20Token");
-const MyFixedToken = artifacts.require("MyFixedSupplyToken");
-const OtherFixedToken = artifacts.require("OtherFixedSupplyToken");
 const Exchange = artifacts.require("Exchange");
+const Intermediary = artifacts.require("Intermediary");
+const Project = artifacts.require("Project");
 
 module.exports = function(deployer) {
   deployer.deploy(SafeMath);
   deployer.link(SafeMath, ERC20Token);
+  deployer.link(SafeMath, Project);
+  deployer.link(SafeMath, Intermediary);
 
   deployer.deploy(ERC20Token);
-  deployer.link(ERC20Token, MyFixedToken);
-  deployer.link(ERC20Token, OtherFixedToken);
+  deployer.link(ERC20Token, Project);
+  deployer.link(ERC20Token, Intermediary);
 
-  deployer.deploy(MyFixedToken);
-  deployer.deploy(OtherFixedToken);
+  deployer.deploy(Project);
+  deployer.link(Project, Intermediary);
 
-  deployer.link(MyFixedToken, Exchange);
-  deployer.link(SafeMath, Exchange);
-  deployer.link(OtherFixedToken, Exchange);
-
-  deployer.deploy(Exchange);
+  deployer.deploy(Intermediary);
 };
