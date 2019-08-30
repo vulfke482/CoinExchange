@@ -1,97 +1,48 @@
-const Exchange = artifacts.require("Exchange");
-const Token = artifacts.require("ERC20Token");
+const ERC20Token = artifacts.require("ERC20Token");
+const Project = artifacts.require("Project");
+const Intermediary = artifacts.require("Intermediary");
 
-const ExchangebleToken = artifacts.require("OtherFixedSupplyToken");
-const MyToken =          artifacts.require("MyFixedSupplyToken");
+contract('Intermediary', (accounts) => {
 
-contract('Exchange', (accounts) => {
+  it("It should test trading between Project and Intermediary", async () => {
 
-  it('should show that my Token is working', async () => {
-    const Token = await MyToken.deployed();
+    let intermediary = await Intermediary.new("Denis", {from: accounts[0]});
+    let currency = await ERC20Token.new(6, 100000000);
 
-    const account = accounts[0];
-    const amount = (await Token.balanceOf(account)).toString();
-    console.log(account, amount);
-  })
+    console.log((await intermediary.getName()).toString());
 
+    // await intermediary.setCurrency(currency, {from:accounts[0]});
+    let intermediaryAddress = intermediary.address;
 
-  it('should show that exchangeble Token is working', async () => {
-    const Token = await ExchangebleToken.deployed();
+    let projects = [];
+    for(let i = 1; i < 10; i++) {
+      projects.push(await Project.new("Project" + i, i, "This is project number " + i, 6, 1000000, {from: accounts[i]}));
+      await projects[i - 1].setCurrency(currency.address, {from:accounts[i]});
+      await projects[i - 1].setIntermediary(intermediaryAddress, {from:accounts[i]});
+    }
 
-    const account = accounts[0];
-    const amount = (await Token.balanceOf(account)).toString();
-    console.log(account, amount);
-  });
+    for(let i = 0; i < 9; i++) {
 
-  it('should show that I can transfer my Token to someone else', async () => {
-    const Token = await MyToken.deployed();
+      let projectInter = (await projects[i].getIntermediary()).toString();
+      console.log(projectInter, accounts[0]);
+    }
 
-    const owner = accounts[0];
-    const account = accounts[1];
-    const ownerBalance = (await Token.balanceOf(owner)).toString();
-    const accountBalance = (await Token.balanceOf(account)).toString();
-
-    console.log(ownerBalance, accountBalance);
-
-    const result = await Token.approve(account,  web3.utils.toBN("600000000000000000000000"));
-    Token.transferFrom(owner, account,  web3.utils.toBN("6000000000000000000000")).then(async () => {
-      const amount = (await Token.balanceOf(account)).toString();
-      console.log(amount);
-    })
-  });
-
-  it('should show that I can transfer exchangeble Token to someone else', async () => {
-    const Token = await ExchangebleToken.deployed();
-
-    const owner = accounts[0];
-    const account = accounts[1];
-    const ownerBalance = (await Token.balanceOf(owner)).toString();
-    const accountBalance = (await Token.balanceOf(account)).toString();
-
-    console.log(ownerBalance, accountBalance);
-
-    const result = await Token.approve(account,  web3.utils.toBN("600000000000000000000000"));
-    await Token.transferFrom(owner, account,  web3.utils.toBN("6000000000000000000000")).then(async () => {
-      const amount = (await Token.balanceOf(account)).toString();
-      console.log(amount);
-    })
-  });
-
-  it('should show what balances in each toknes of two accounts', async () => {
-    const exchange = await Exchange.deployed();
-    const Token = await MyToken.deployed();
-    const eToken = await ExchangebleToken.deployed();
-
-    await exchange.setMyToken(Token.address);
-    await exchange.setExchangebleToken(eToken.address);
+    for(let project of projects) {
+      console.log((await project.getName()).toString() + " " + (await project.getDescription()).toString());
+    }
     
-    const account = accounts[0];
-    const account2 = accounts[1];
+    console.log("Starting register accounts");
+    for(let project of projects) {
+      await intermediary.registerNewProject(project.address, {from:accounts[0]});
+    }
+    console.log("Finishing register accounts");
 
-
-    const amount = web3.utils.toBN("2000000000000000000");
-
-    console.log((await exchange.getBalanceOfMyToken(account)).toString());
-
-    console.log("Token account", (await Token.balanceOf(account)).toString());
-
-    console.log("EToken account", (await eToken.balanceOf(account)).toString());
-
-    console.log("Token account2", (await Token.balanceOf(account2)).toString());
-
-    console.log("EToken account2", (await eToken.balanceOf(account2)).toString());
-    
-    await exchange.sendMyToken(account, account2, web3.utils.toBN(amount));
-
-    console.log("Token account", (await Token.balanceOf(account)).toString());
-
-    console.log("EToken account", (await eToken.balanceOf(account)).toString());
-
-    console.log("Token account2", (await Token.balanceOf(account2)).toString());
-
-    console.log("EToken account2", (await eToken.balanceOf(account2)).toString());
+    console.log("Trying to by token");
+    let res=await intermediary.buyProjectToken("Project1", 1000, {from:accounts[0]});
+    console.log("Token is bought");
+    console.log(res);
+    console.log((await intermediary.getBalanceForProject("Project1", {from:accounts[0]}) ).toString());
 
   });
-
   
 });

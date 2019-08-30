@@ -11,13 +11,27 @@ contract Intermediary {
     Project[] projects;
 
     // Currency token
-    ERC20Token currency;
+    ERC20Token currency_;
 
     // Intermediary's address
     address intermediary_;
 
     // Intermediary's name
     string name_;
+
+    // Modificators
+
+    modifier onlyBy(address _account)
+    {
+        require(
+            msg.sender == _account,
+            "Sender not authorized. Intermediary."
+        );
+        // Do not forget the "_;"! It will
+        // be replaced by the actual function
+        // body when the modifier is used.
+        _;
+    }
 
     // Methods
 
@@ -28,9 +42,14 @@ contract Intermediary {
 
     // Public functions
 
+    // Set currency
+    function setCurrency(ERC20Token currency) public onlyBy(intermediary_) returns(bool success) {
+        currency_ = currency;
+        return true;
+    }
+
     // Set project price
-    function setProjectPrice(string memory projectName, uint projectPrice) public returns(bool success) {
-        if(msg.sender != intermediary_) return false;
+    function setProjectPrice(string memory projectName, uint projectPrice) public onlyBy(intermediary_) returns(bool success) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
         setProjectPrice(projects[id], projectPrice);
@@ -39,7 +58,7 @@ contract Intermediary {
 
 
     // Register new Project
-    function registerNewProject(Project project) public returns(bool success) {
+    function registerNewProject(Project project) public onlyBy(intermediary_) returns(bool success) {
         (uint id, bool err) = findProjectIdByName(project.getName());
         if(!err) return false;
 
@@ -48,8 +67,7 @@ contract Intermediary {
     }
 
     // By project token - avaliable only for intermediary
-    function buyProjectTocken(string memory projectName, uint amount) public returns(bool success) {
-        if(msg.sender != intermediary_) return false;
+    function buyProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
 
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
@@ -63,8 +81,7 @@ contract Intermediary {
     }
 
     // Sell project token - avalable only for intermediary
-    function sellProjectTocken(string memory projectName, uint amount) public returns(bool success) {
-        if(msg.sender != intermediary_) return false;
+    function sellProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
 
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
@@ -81,19 +98,23 @@ contract Intermediary {
     }
 
     // Set a new price for project
-    function setProjectPrice(Project project, uint projectPrice) public returns(bool success) {
+    function setProjectPrice(Project project, uint projectPrice) public onlyBy(intermediary_) returns(bool success) {
         project.setPrice(projectPrice);
         return true;
     }
 
-    // Get name of the project
+    // Get intermediary address
+    function getIntermediary() public view returns(address) {
+        return intermediary_;
+    }
+
+    // Get name of the intermediary
     function getName() public view returns(string memory){
         return name_;
     }
 
-        // Get balance for project
-    function getBalanceForProject(string memory projectName) public view returns(uint balance) {
-        if(msg.sender != intermediary_) return 0;
+    // Get balance for project
+    function getBalanceForProject(string memory projectName) public onlyBy(intermediary_) view returns(uint balance) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return 0;
 
@@ -102,8 +123,8 @@ contract Intermediary {
     }
 
     // Get balance for currency
-    function getBalanceForCurrency() public view returns(uint balance) {
-        return currency.balanceOf(intermediary_);
+    function getBalanceForCurrency() public view onlyBy(intermediary_) returns(uint balance) {
+        return currency_.balanceOf(intermediary_);
     }
 
     // Internal functions
