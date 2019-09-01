@@ -4,6 +4,8 @@ import {SafeMath} from "./SafeMath.sol";
 import {ERC20Token} from "./Token.sol";
 import {Project} from "./Project.sol";
 
+
+
 contract Intermediary {
     using SafeMath for uint;
 
@@ -11,13 +13,13 @@ contract Intermediary {
     Project[] projects;
 
     // Currency token
-    ERC20Token currency_;
+    ERC20Token _currency;
 
     // Intermediary's address
-    address intermediary_;
+    address _intermediary;
 
     // Intermediary's name
-    string name_;
+    string _name;
 
     // Modificators
 
@@ -36,20 +38,20 @@ contract Intermediary {
     // Methods
 
     constructor(string memory name) public {
-        name_ = name;
-        intermediary_ = msg.sender;
+        _name = name;
+        _intermediary = msg.sender;
     }
 
     // Public functions
 
     // Set currency
-    function setCurrency(ERC20Token currency) public onlyBy(intermediary_) returns(bool success) {
-        currency_ = currency;
+    function setCurrency(ERC20Token currency) public onlyBy(_intermediary) returns(bool success) {
+        _currency = currency;
         return true;
     }
 
     // Set project price
-    function setProjectPrice(string memory projectName, uint projectPrice) public onlyBy(intermediary_) returns(bool success) {
+    function setProjectPrice(string memory projectName, uint projectPrice) public onlyBy(_intermediary) returns(bool success) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
         setProjectPrice(projects[id], projectPrice);
@@ -58,7 +60,7 @@ contract Intermediary {
 
 
     // Register new Project
-    function registerNewProject(Project project) public onlyBy(intermediary_) returns(bool success) {
+    function registerNewProject(Project project) public onlyBy(_intermediary) returns(bool success) {
         (uint id, bool err) = findProjectIdByName(project.getName());
         if(!err) return false;
 
@@ -67,7 +69,7 @@ contract Intermediary {
     }
 
     // By project token - avaliable only for intermediary
-    function buyProjectTokenInter(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
+    function buyProjectTokenInter(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
 
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
@@ -81,14 +83,14 @@ contract Intermediary {
     }
 
     // Sell project token - avaliable only for intermediary
-    function sellProjectTokenInter(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
+    function sellProjectTokenInter(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
 
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
 
         Project project = projects[id];
 
-        require(project.balanceOf(intermediary_) < amount, "You have not enogh project token.");
+        require(project.balanceOf(_intermediary) < amount, "You have not enogh project token.");
 
         if(project.sellToken(amount)) {
             return true;
@@ -98,43 +100,43 @@ contract Intermediary {
     }
 
     // Buy project token
-    function buyProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
+    function buyProjectToken(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
         return false;
     }
 
     // Sell project token
-    function sellProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
+    function sellProjectToken(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
         return false;
     }
 
     // Set a new price for project
-    function setProjectPrice(Project project, uint projectPrice) public onlyBy(intermediary_) returns(bool success) {
+    function setProjectPrice(Project project, uint projectPrice) public onlyBy(_intermediary) returns(bool success) {
         project.setPrice(projectPrice);
         return true;
     }
 
     // Get intermediary address
     function getIntermediary() public view returns(address) {
-        return intermediary_;
+        return _intermediary;
     }
 
     // Get name of the intermediary
     function getName() public view returns(string memory){
-        return name_;
+        return _name;
     }
 
     // Get balance for project
-    function getBalanceForProject(string memory projectName) public onlyBy(intermediary_) view returns(uint balance) {
+    function getBalanceForProject(string memory projectName) public onlyBy(_intermediary) view returns(uint balance) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return 0;
 
         Project project = projects[id];
-        return project.balanceOf(intermediary_);
+        return project.balanceOf(_intermediary);
     }
 
     // Get balance for currency
-    function getBalanceForCurrency() public view onlyBy(intermediary_) returns(uint balance) {
-        return currency_.balanceOf(intermediary_);
+    function getBalanceForCurrency() public view onlyBy(_intermediary) returns(uint balance) {
+        return _currency.balanceOf(_intermediary);
     }
 
     // Internal functions
