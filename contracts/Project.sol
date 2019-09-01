@@ -8,7 +8,6 @@ contract Project is ERC20Token {
 
     string name_;
     string description_;
-    uint _totalSupply;
     uint price_;
     address owner_;
     address intermediary_;
@@ -19,7 +18,8 @@ contract Project is ERC20Token {
         uint price,
         string memory description,
         uint8 decimals,
-        uint128 totalSupply)
+        uint128 totalSupply
+    )
         ERC20Token(decimals, totalSupply)
         public
     {
@@ -67,7 +67,7 @@ contract Project is ERC20Token {
     // Set intermediary - avaliable only for owner.
     function setIntermediary(address intermediary) public onlyBy(owner_) returns(bool success) {
         intermediary_ = intermediary;
-        approve(intermediary_, _totalSupply);
+        approve(intermediary_, totalSupply_);
         return true;
     }
 

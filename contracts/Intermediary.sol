@@ -67,7 +67,7 @@ contract Intermediary {
     }
 
     // By project token - avaliable only for intermediary
-    function buyProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
+    function buyProjectTokenInter(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
 
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
@@ -80,8 +80,8 @@ contract Intermediary {
         return false;
     }
 
-    // Sell project token - avalable only for intermediary
-    function sellProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
+    // Sell project token - avaliable only for intermediary
+    function sellProjectTokenInter(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
 
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
@@ -94,6 +94,16 @@ contract Intermediary {
             return true;
         }
 
+        return false;
+    }
+
+    // Buy project token
+    function buyProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
+        return false;
+    }
+
+    // Sell project token
+    function sellProjectToken(string memory projectName, uint amount) public onlyBy(intermediary_) returns(bool success) {
         return false;
     }
 
