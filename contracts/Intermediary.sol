@@ -1,9 +1,16 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.2;
 
-import {SafeMath} from "./SafeMath.sol";
-import {ERC20Token} from "./Token.sol";
-import {Project} from "./Project.sol";
+import {Project, ERC20, SafeMath} from "./Project.sol";
 
+
+/*
+* TODO:
+* Create functions for user to by token and sell token.
+* Change currency to etherium.
+* Create rule to determine price for project token.
+*
+* Check aproves
+*/
 
 
 contract Intermediary {
@@ -13,7 +20,7 @@ contract Intermediary {
     Project[] projects;
 
     // Currency token
-    ERC20Token _currency;
+    ERC20 _currency;
 
     // Intermediary's address
     address _intermediary;
@@ -45,7 +52,7 @@ contract Intermediary {
     // Public functions
 
     // Set currency
-    function setCurrency(ERC20Token currency) public onlyBy(_intermediary) returns(bool success) {
+    function setCurrency(ERC20 currency) public onlyBy(_intermediary) returns(bool success) {
         _currency = currency;
         return true;
     }
@@ -75,6 +82,8 @@ contract Intermediary {
         if(err) return false;
 
         Project project = projects[id];
+        project.setPrice(_price(project));
+
         if(project.buyToken(amount)) {
             return true;
         }
@@ -89,6 +98,7 @@ contract Intermediary {
         if(err) return false;
 
         Project project = projects[id];
+        project.setPrice(_price(project));
 
         require(project.balanceOf(_intermediary) < amount, "You have not enogh project token.");
 
@@ -101,12 +111,28 @@ contract Intermediary {
 
     // Buy project token
     function buyProjectToken(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
-        return false;
+        (uint id, bool err) = findProjectIdByName(projectName);
+        if(err) return false;
+
+        Project project = projects[id];
+
+        project.transferFrom(_intermediary, msg.sender, amount);
+        _currency.transferFrom(msg.sender, _intermediary, amount.mul(_price(project)));
+
+        return true;
     }
 
     // Sell project token
     function sellProjectToken(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
-        return false;
+        (uint id, bool err) = findProjectIdByName(projectName);
+        if(err) return false;
+
+        Project project = projects[id];
+
+        project.transferFrom(msg.sender, _intermediary, amount);
+        _currency.transferFrom(_intermediary, msg.sender, amount.mul(_price(project)));
+
+        return true;
     }
 
     // Set a new price for project
@@ -160,5 +186,13 @@ contract Intermediary {
             }
         }
         return (projects.length, true);
+    }
+
+    // Get price for project
+    function _price(Project project) internal view returns(uint) {
+
+        // uint price =project.totalSupply().div(project.balanceOf(address(this)));
+        uint price = 2;
+        return price;
     }
 }

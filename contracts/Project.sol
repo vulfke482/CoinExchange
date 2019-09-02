@@ -1,11 +1,11 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.2;
 
-import {SafeMath} from "./SafeMath.sol";
-import {ERC20Token} from "./Token.sol";
+import {ERC20, SafeMath} from 'openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
+/*
+*  TODO: change currency to etherium
+*/
 
-import "@openzeppelin/contracts/token/ERC20/ERC20Full.sol";
-
-contract Project is ERC20Token {
+contract Project is ERC20 {
     using SafeMath for uint;
 
     string _name;
@@ -13,22 +13,24 @@ contract Project is ERC20Token {
     uint _price;
     address _owner;
     address _intermediary;
-    ERC20Token _currency;
+    uint8 _decimals;
+    ERC20 _currency;
 
     constructor(
         string memory name,
         uint price,
         string memory description,
         uint8 decimals,
-        uint128 totalSupply
+        uint totalSupply
     )
-        ERC20Token(decimals, totalSupply)
         public
     {
+        _decimals = decimals;
         _name = name;
         _price = price;
         _description = description;
         _owner = msg.sender;
+        _mint(address(this), totalSupply);
     }
 
     // Modifiers
@@ -69,27 +71,27 @@ contract Project is ERC20Token {
     // Set intermediary - avaliable only for owner.
     function setIntermediary(address intermediary) public onlyBy(_owner) returns(bool success) {
         _intermediary = intermediary;
-        approve(_intermediary, totalSupply_);
+        increaseAllowance(_intermediary, totalSupply());
         return true;
     }
 
     // Set currency - avaliable only for owner
-    function setCurrency(ERC20Token currency) public onlyBy(_owner) returns(bool success) {
+    function setCurrency(ERC20 currency) public onlyBy(_owner) returns(bool success) {
         _currency = currency;
         return true;
     }
 
     // Buy token - avaliable only for intermediary (for now).
     function buyToken(uint amount) public onlyByV(_intermediary, "Problem in buyToken: wrong account.") returns(bool success) {
-        transferFrom(_owner, _intermediary, amount);   // is not safe
-        _currency.transfer(_owner, amount.mul(_price));
+        transferFrom(address(this), _intermediary, amount);   // is not safe
+        _currency.transfer(_owner, amount.mul(_price)); // TODO: change with ether
         return true;
     }
 
     // Sell token - avaliable only for intermediary (for now).
     function sellToken(uint amount) public onlyBy(_intermediary) returns(bool success) {
-        transfer(_owner, amount);
-        _currency.transferFrom(_owner, _intermediary, amount.mul(_price)); // is not safe
+        transferFrom(_intermediary, address(this), amount);
+        _currency.transferFrom(address(this), _intermediary, amount.mul(_price)); // is not safe
         return true;
     }
 
