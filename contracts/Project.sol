@@ -3,6 +3,7 @@ pragma solidity ^0.5.2;
 import {ERC20, SafeMath} from 'openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
 /*
 *  TODO: change currency to etherium
+*  Now it is a little bit a mess
 */
 
 contract Project is ERC20 {
@@ -11,10 +12,11 @@ contract Project is ERC20 {
     string _name;
     string _description;
     uint _price;
-    address _owner;
-    address _intermediary;
+    address payable _owner;
+    address payable _intermediary;
     uint8 _decimals;
-    ERC20 _currency;
+
+    address payable _wallet;
 
     constructor(
         string memory name,
@@ -31,6 +33,7 @@ contract Project is ERC20 {
         _description = description;
         _owner = msg.sender;
         _mint(address(this), totalSupply);
+        _wallet = address(this);
     }
 
     // Modifiers
@@ -69,29 +72,29 @@ contract Project is ERC20 {
     }
 
     // Set intermediary - avaliable only for owner.
-    function setIntermediary(address intermediary) public onlyBy(_owner) returns(bool success) {
+    function setIntermediary(address payable intermediary) public onlyBy(_owner) returns(bool success) {
         _intermediary = intermediary;
-        increaseAllowance(_intermediary, totalSupply());
-        return true;
-    }
-
-    // Set currency - avaliable only for owner
-    function setCurrency(ERC20 currency) public onlyBy(_owner) returns(bool success) {
-        _currency = currency;
+        // increaseAllowance(_intermediary, totalSupply());
+        _approve(address(this), _intermediary, totalSupply());
         return true;
     }
 
     // Buy token - avaliable only for intermediary (for now).
     function buyToken(uint amount) public onlyByV(_intermediary, "Problem in buyToken: wrong account.") returns(bool success) {
         transferFrom(address(this), _intermediary, amount);   // is not safe
-        _currency.transfer(_owner, amount.mul(_price)); // TODO: change with ether
+        address(this).transfer(amount.mul(_price));
         return true;
     }
 
     // Sell token - avaliable only for intermediary (for now).
     function sellToken(uint amount) public onlyBy(_intermediary) returns(bool success) {
         transferFrom(_intermediary, address(this), amount);
-        _currency.transferFrom(address(this), _intermediary, amount.mul(_price)); // is not safe
+        _transferEther(_intermediary, amount.mul(_price));
+        return true;
+    }
+
+    function _transferEther(address payable account, uint amount) internal returns(bool) {
+        account.transfer(amount);
         return true;
     }
 
@@ -115,9 +118,9 @@ contract Project is ERC20 {
         return _owner;
     }
 
-    // Get currency balance.
-    function getCurrencyBalance() public view returns(uint) {
-        return _currency.balanceOf(msg.sender);
+    // Get project's wallet
+    function getWallet() public view returns(address wallet) {
+        return _wallet;
     }
 
     // Get tocken balance.
@@ -128,5 +131,15 @@ contract Project is ERC20 {
     // Get project's description
     function getDescription() public view returns(string memory) {
         return _description;
+    }
+
+    // Approving from to
+    function approveFrom(address from, address to, uint amount) public onlyBy(_intermediary) returns(bool) {
+        _approve(from, to, amount);
+        return true;
+    }
+
+    function () external payable  {
+        _wallet.transfer(msg.value);
     }
 }

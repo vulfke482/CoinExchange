@@ -19,9 +19,6 @@ contract Intermediary {
     // List of projects
     Project[] projects;
 
-    // Currency token
-    ERC20 _currency;
-
     // Intermediary's address
     address _intermediary;
 
@@ -51,12 +48,6 @@ contract Intermediary {
 
     // Public functions
 
-    // Set currency
-    function setCurrency(ERC20 currency) public onlyBy(_intermediary) returns(bool success) {
-        _currency = currency;
-        return true;
-    }
-
     // Set project price
     function setProjectPrice(string memory projectName, uint projectPrice) public onlyBy(_intermediary) returns(bool success) {
         (uint id, bool err) = findProjectIdByName(projectName);
@@ -72,6 +63,7 @@ contract Intermediary {
         if(!err) return false;
 
         projects.push(project);
+        project.increaseAllowance(project.getWallet(), project.totalSupply());
         return true;
     }
 
@@ -83,7 +75,6 @@ contract Intermediary {
 
         Project project = projects[id];
         project.setPrice(_price(project));
-
         if(project.buyToken(amount)) {
             return true;
         }
@@ -110,15 +101,16 @@ contract Intermediary {
     }
 
     // Buy project token
-    function buyProjectToken(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
+    function buyProjectToken(string memory projectName, uint amount) public payable returns(bool success) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
 
         Project project = projects[id];
-
+        
+        require(msg.value >= _price(project), "There is not enough ether");
+        address(this).transfer(amount.mul(_price(project)));
         project.transferFrom(_intermediary, msg.sender, amount);
-        _currency.transferFrom(msg.sender, _intermediary, amount.mul(_price(project)));
-
+        
         return true;
     }
 
@@ -130,8 +122,7 @@ contract Intermediary {
         Project project = projects[id];
 
         project.transferFrom(msg.sender, _intermediary, amount);
-        _currency.transferFrom(_intermediary, msg.sender, amount.mul(_price(project)));
-
+        _transferEther(msg.sender, amount.mul(_price(projects[id])));
         return true;
     }
 
@@ -160,12 +151,21 @@ contract Intermediary {
         return project.balanceOf(_intermediary);
     }
 
-    // Get balance for currency
-    function getBalanceForCurrency() public view onlyBy(_intermediary) returns(uint balance) {
-        return _currency.balanceOf(_intermediary);
+    // Get project price
+    function getProjectPrice(string memory projectName) public view returns(uint) {
+        (uint id, bool err) = findProjectIdByName(projectName);
+        require(!err, "There is no such project in our database");
+
+        return _price(projects[id]);
     }
 
     // Internal functions
+
+    // Transfer ether from contract to account
+    function _transferEther(address payable account, uint amount) internal returns (bool success) {
+        account.transfer(amount);
+        return true;
+    }
 
     // Checking String for equation
     function equalStrings(string memory firstStr, string memory secondStr) internal pure returns(bool success) {
@@ -194,5 +194,10 @@ contract Intermediary {
         // uint price =project.totalSupply().div(project.balanceOf(address(this)));
         uint price = 2;
         return price;
+    }
+
+    // Payable enterface
+    function () external payable {
+        address(this).transfer(msg.value);
     }
 }

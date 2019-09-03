@@ -7,7 +7,6 @@ contract('Intermediary', (accounts) => {
   it("It should test trading between Project and Intermediary", async () => {
 
     let intermediary = await Intermediary.new("Denis", {from: accounts[0]});
-    let currency = await ERC20Token.new(2, 100000000);
 
     console.log((await intermediary.getName()).toString());
 
@@ -17,7 +16,6 @@ contract('Intermediary', (accounts) => {
     let projects = [];
     for(let i = 1; i < 10; i++) {
       projects.push(await Project.new("Project" + i, i, "This is project number " + i, 6, 1000000, {from: accounts[i]}));
-      await projects[i - 1].setCurrency(currency.address, {from:accounts[i]});
       await projects[i - 1].setIntermediary(intermediaryAddress, {from:accounts[i]});
     }
 
@@ -38,6 +36,11 @@ contract('Intermediary', (accounts) => {
     console.log("Finishing register accounts");
 
     console.log("Trying to by token");
+
+    console.log(await web3.eth.getBalance(intermediaryAddress));
+
+    console.log((await projects[0].allowance(intermediaryAddress, projects[0].address)).toString());
+    console.log((await projects[0].allowance(projects[0].address, intermediaryAddress)).toString());
     let res=await intermediary.buyProjectTokenInter("Project1", 1000, {from:accounts[0]});
     console.log("Token is bought");
     console.log(res);
