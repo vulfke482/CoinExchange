@@ -37,14 +37,30 @@ contract('Intermediary', (accounts) => {
 
     console.log("Trying to by token");
 
+
+    console.log(await web3.eth.getBalance(accounts[1]));
+    console.log(await web3.eth.getBalance(accounts[0]));
+
+    var handleReceipt = (error, receipt) => {
+      if (error) console.error(error);
+      else {
+        console.log(receipt);
+      }
+    }
+
+    await intermediary.sendTransaction({to:intermediaryAddress, from:accounts[0], value:web3.utils.toWei("0.5", "ether"), gas:350}, handleReceipt);
+
+    console.log(await web3.eth.getBalance(accounts[1]));
+    console.log(await web3.eth.getBalance(accounts[0]));
     console.log(await web3.eth.getBalance(intermediaryAddress));
+    console.log((await intermediary.getBalance()).toString());
 
     console.log((await projects[0].allowance(intermediaryAddress, projects[0].address)).toString());
     console.log((await projects[0].allowance(projects[0].address, intermediaryAddress)).toString());
-    let res=await intermediary.buyProjectTokenInter("Project1", 1000, {from:accounts[0]});
-    console.log("Token is bought");
-    console.log(res);
-    console.log((await intermediary.getBalanceForProject("Project1", {from:accounts[0]}) ).toString());
+    // let res=await intermediary.buyProjectTokenInter("Project1", 1000, {from:accounts[0]});
+    // console.log("Token is bought");
+    // console.log(res);
+    // console.log((await intermediary.getBalanceForProject("Project1", {from:accounts[0]}) ).toString());
 
   });
   

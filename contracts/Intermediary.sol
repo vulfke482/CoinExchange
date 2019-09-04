@@ -25,6 +25,10 @@ contract Intermediary {
     // Intermediary's name
     string _name;
 
+    uint _balance;
+
+    address payable _wallet;
+
     // Modificators
 
     modifier onlyBy(address _account)
@@ -44,6 +48,8 @@ contract Intermediary {
     constructor(string memory name) public {
         _name = name;
         _intermediary = msg.sender;
+        _balance = 0;
+        _wallet = address(uint160(address(this)));
     }
 
     // Public functions
@@ -75,6 +81,7 @@ contract Intermediary {
 
         Project project = projects[id];
         project.setPrice(_price(project));
+        
         if(project.buyToken(amount)) {
             return true;
         }
@@ -108,7 +115,6 @@ contract Intermediary {
         Project project = projects[id];
         
         require(msg.value >= _price(project), "There is not enough ether");
-        address(this).transfer(amount.mul(_price(project)));
         project.transferFrom(_intermediary, msg.sender, amount);
         
         return true;
@@ -143,12 +149,17 @@ contract Intermediary {
     }
 
     // Get balance for project
-    function getBalanceForProject(string memory projectName) public onlyBy(_intermediary) view returns(uint balance) {
+    function getBalanceForProject(string memory projectName) public onlyBy(_intermediary) view returns(uint) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return 0;
 
         Project project = projects[id];
         return project.balanceOf(_intermediary);
+    }
+
+    //Get balance
+    function getBalance() public returns(uint) {
+        return _balance;
     }
 
     // Get project price
@@ -196,8 +207,12 @@ contract Intermediary {
         return price;
     }
 
-    // Payable enterface
-    function () external payable {
-        address(this).transfer(msg.value);
+    /// @notice Logs the address of the sender and amounts paid to the contract
+    event Paid(address indexed _from, uint _value);
+
+    // Payable interface
+    function() external payable {
+        _balance += msg.value;
+        emit Paid(msg.sender, msg.value);
     }
 }
