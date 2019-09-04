@@ -1,6 +1,7 @@
 pragma solidity ^0.5.2;
 
 import {ERC20, SafeMath} from 'openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
+import {Currency} from './Currency.sol';
 /*
 *  TODO: change currency to etherium
 *  Now it is a little bit a mess
@@ -15,6 +16,7 @@ contract Project is ERC20 {
     address payable _owner;
     address payable _intermediary;
     uint8 _decimals;
+    Currency _currency;
 
     address payable _wallet;
 
@@ -74,25 +76,25 @@ contract Project is ERC20 {
     // Set intermediary - avaliable only for owner.
     function setIntermediary(address payable intermediary) public onlyBy(_owner) returns(bool success) {
         _intermediary = intermediary;
-        // increaseAllowance(_intermediary, totalSupply());
-        _approve(address(this), _intermediary, totalSupply());
+        increaseAllowance(_intermediary, totalSupply());
+        // _approve(address(this), _intermediary, totalSupply());
         return true;
     }
 
-    // Buy token - avaliable only for intermediary (for now).
-    function buyToken(uint amount) public onlyByV(_intermediary, "Problem in buyToken: wrong account.") returns(bool success) {
-        transferFrom(address(this), _intermediary, amount);   // is not safe
-        address(this).transfer(amount.mul(_price));
+    function connectProjectWithIntermediary(address project, address intermediary, uint amount) public onlyBy(_intermediary) returns(bool) {
+        _approve(project, intermediary, amount);
+        _approve(intermediary, project, amount);
+    }
+
+    // Set currency - avaliable only for owner.
+    function setCurrency(Currency currency) public onlyBy(_owner) returns(bool success) {
+        _currency = currency;
+        _currency.increaseAllowance(_intermediary, currency.totalSupply());
+        // _approve(address(this), _intermediary, totalSupply());
         return true;
     }
 
-    // Sell token - avaliable only for intermediary (for now).
-    function sellToken(uint amount) public onlyBy(_intermediary) returns(bool success) {
-        transferFrom(_intermediary, address(this), amount);
-        _transferEther(_intermediary, amount.mul(_price));
-        return true;
-    }
-
+    // transfer ether from address(this)
     function _transferEther(address payable account, uint amount) internal returns(bool) {
         account.transfer(amount);
         return true;

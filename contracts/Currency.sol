@@ -11,6 +11,8 @@ contract Currency is ERC20 {
 
     string _name;
     uint8 _decimals;
+    address _owner;
+    address _wallet;
 
     constructor(
         string memory name,
@@ -21,6 +23,18 @@ contract Currency is ERC20 {
     {
         _decimals = decimals;
         _name = name;
-        _mint(address(this), totalSupply);
+        _owner = msg.sender;
+        _wallet = _owner;
+        _mint(_wallet, totalSupply);
+    }
+
+    // Get currency's wallet
+    function getWallet() public returns(address) {
+        return _wallet;
+    }
+
+    function connectProjectWithIntermediary(address project, address intermediary, uint amount) public returns(bool) {
+        _approve(project, intermediary, amount);
+        _approve(intermediary, project, amount);
     }
 }

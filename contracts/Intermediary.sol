@@ -2,7 +2,7 @@ pragma solidity ^0.5.2;
 
 import {Project, ERC20, SafeMath} from "./Project.sol";
 
-
+import {Currency} from "./Currency.sol";
 /*
 * TODO:
 * Create functions for user to by token and sell token.
@@ -25,6 +25,12 @@ contract Intermediary {
     // Intermediary's name
     string _name;
 
+    // Currency
+    Currency _currency;
+
+    // Wallet
+    address _wallet;
+
     // Modificators
 
     modifier onlyBy(address _account)
@@ -44,9 +50,20 @@ contract Intermediary {
     constructor(string memory name) public {
         _name = name;
         _intermediary = msg.sender;
+        _wallet = msg.sender;
     }
 
     // Public functions
+
+    function getWallet() public view returns(address) {
+        return _wallet;
+    }
+
+    // Set currency
+    function setCurrency(Currency currency) public onlyBy(_intermediary) returns(bool) {
+        _currency = currency;
+        return true;
+    }
 
     // Set project price
     function setProjectPrice(string memory projectName, uint projectPrice) public onlyBy(_intermediary) returns(bool success) {
@@ -56,15 +73,20 @@ contract Intermediary {
         return true;
     }
 
-
     // Register new Project
     function registerNewProject(Project project) public onlyBy(_intermediary) returns(bool success) {
         (uint id, bool err) = findProjectIdByName(project.getName());
         if(!err) return false;
 
         projects.push(project);
-        project.increaseAllowance(project.getWallet(), project.totalSupply());
+        project.connectProjectWithIntermediary(getWallet(), project.getWallet(), project.totalSupply());
+        _currency.connectProjectWithIntermediary(getWallet(), project.getWallet(), _currency.totalSupply());
         return true;
+    }
+
+    function registerNewUser(address user) public onlyBy(_intermediary) returns(bool success) {
+        for(uint i = 0; i < projects.length; i++) projects[i].connectProjectWithIntermediary(getWallet(), user, projects[i].totalSupply());
+        _currency.connectProjectWithIntermediary(getWallet(), user, _currency.totalSupply());
     }
 
     // By project token - avaliable only for intermediary
@@ -74,11 +96,8 @@ contract Intermediary {
         if(err) return false;
 
         Project project = projects[id];
-        project.setPrice(_price(project));
-        if(project.buyToken(amount)) {
-            return true;
-        }
-
+        project.transferFrom(project.getWallet(), getWallet(), amount);
+        _currency.transferFrom(getWallet(), project.getWallet(), amount.mul(_price(project)));
         return false;
     }
 
@@ -89,28 +108,25 @@ contract Intermediary {
         if(err) return false;
 
         Project project = projects[id];
-        project.setPrice(_price(project));
 
         require(project.balanceOf(_intermediary) < amount, "You have not enogh project token.");
 
-        if(project.sellToken(amount)) {
-            return true;
-        }
+        project.transferFrom(getWallet(), project.getWallet(), amount);
+        _currency.transferFrom(project.getWallet(), getWallet(), amount.mul(_price(project)));
 
         return false;
     }
 
     // Buy project token
-    function buyProjectToken(string memory projectName, uint amount) public payable returns(bool success) {
+    function buyProjectToken(string memory projectName, uint amount) public returns(bool success) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
 
         Project project = projects[id];
-        
-        require(msg.value >= _price(project), "There is not enough ether");
-        address(this).transfer(amount.mul(_price(project)));
+
         project.transferFrom(_intermediary, msg.sender, amount);
-        
+        _currency.transferFrom(msg.sender, _intermediary, amount.mul(_price(project)));
+
         return true;
     }
 
@@ -121,8 +137,8 @@ contract Intermediary {
 
         Project project = projects[id];
 
-        project.transferFrom(msg.sender, _intermediary, amount);
-        _transferEther(msg.sender, amount.mul(_price(projects[id])));
+        project.transferFrom(msg.sender, getWallet(), amount);
+        _currency.transferFrom(getWallet(), msg.sender, amount.mul(_price(project)));
         return true;
     }
 
