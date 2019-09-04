@@ -131,7 +131,7 @@ contract Intermediary {
     }
 
     // Sell project token
-    function sellProjectToken(string memory projectName, uint amount) public onlyBy(_intermediary) returns(bool success) {
+    function sellProjectToken(string memory projectName, uint amount) public returns(bool success) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return false;
 
@@ -159,12 +159,17 @@ contract Intermediary {
     }
 
     // Get balance for project
-    function getBalanceForProject(string memory projectName) public onlyBy(_intermediary) view returns(uint balance) {
+    function getBalanceForProject(string memory projectName) public view returns(uint balance) {
         (uint id, bool err) = findProjectIdByName(projectName);
         if(err) return 0;
 
         Project project = projects[id];
-        return project.balanceOf(_intermediary);
+        return project.balanceOf(msg.sender);
+    }
+
+    // Get currency balance
+    function getBalanceForCurrency() public view returns(uint balance) {
+        return _currency.balanceOf(msg.sender);
     }
 
     // Get project price

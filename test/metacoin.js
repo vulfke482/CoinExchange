@@ -60,18 +60,51 @@ contract('Intermediary', (accounts) => {
       (await projects[0].allowance(projects[0].address, accounts[0])).toString(),
       (await projects[0].allowance(accounts[0], projects[0].address)).toString()
       );
-    await intermediary.buyProjectTokenInter("Project2", 5000, {from:accounts[0]});
-    console.log((await projects[0].balanceOf(accounts[0])).toString());
-    console.log((await projects[0].balanceOf(projects[0].address)).toString());
 
-    await intermediary.registerNewUser(accounts[3]);
+    console.log(
+      "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
+      "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
+      );
+  
+
+    console.log("Intermediary buyes token");
+    await intermediary.buyProjectTokenInter("Project2", 5000, {from:accounts[0]});
+    console.log("After intermediary bought token");
+    console.log(
+      "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
+      "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
+      );
+
+
+    console.log("Buying...");
+    await intermediary.registerNewUser(accounts[3], {from:accounts[0]});
     await currency.transferFrom(accounts[1], accounts[3], 1000000);
     await intermediary.buyProjectToken("Project2", 1000, {from:accounts[3]});
 
-    console.log((await projects[0].balanceOf(accounts[3])).toString());
-    console.log((await projects[0].balanceOf(projects[0].address)).toString());
-    console.log((await projects[0].balanceOf(accounts[0])).toString());
+    console.log("After buy");
+    console.log(
+      "Account - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[3]})).toString(),
+      "\nAccount - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[3]})).toString()
+      );
 
+    console.log(
+      "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
+      "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
+      );
+
+    console.log("Sell...");
+    await intermediary.sellProjectToken("Project2", 500, {from:accounts[3]});
+
+    console.log("After sell");
+    console.log(
+      "Account - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[3]})).toString(),
+      "\nAccount - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[3]})).toString()
+      );
+
+    console.log(
+      "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
+      "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
+      );
   });
 
   

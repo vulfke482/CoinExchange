@@ -36,5 +36,9 @@ contract Currency is ERC20 {
     function connectProjectWithIntermediary(address project, address intermediary, uint amount) public returns(bool) {
         _approve(project, intermediary, amount);
         _approve(intermediary, project, amount);
+        _approve(project, msg.sender, amount);
+        _approve(intermediary, msg.sender, amount);
+        _approve(msg.sender, project, amount);
+        _approve(msg.sender, intermediary, amount);
     }
 }
