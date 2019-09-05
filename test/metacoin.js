@@ -6,18 +6,18 @@ contract('Intermediary', (accounts) => {
 
   it("It should test trading between Project and Intermediary", async () => {
 
-    let intermediary = await Intermediary.new("Denis", {from: accounts[0]});
+    let intermediary = await Intermediary.deployed();//("Denis", {from: accounts[0]});
 
-    console.log((await intermediary.getName()).toString());
+    console.log("get name:", (await intermediary.getName()).toString());
+    
 
-    // await intermediary.setCurrency(currency, {from:accounts[0]});
     let intermediaryAddress = intermediary.address;
-
     let projects = [];
     for(let i = 1; i < 10; i++) {
       projects.push(await Project.new("Project" + i, i, "This is project number " + i, 6, 1000000, {from: accounts[i]}));
       await projects[i - 1].setIntermediary(intermediaryAddress, {from:accounts[i]});
     }
+    console.log("here");
 
     for(let i = 0; i < 9; i++) {
 
