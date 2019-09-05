@@ -4,25 +4,28 @@ const Intermediary = artifacts.require("Intermediary");
 
 contract('Intermediary', (accounts) => {
 
+  let intermediary;
+  let currency;
+  let project;
+
   it("Setup", async () => {
 
-    let intermediary = await Intermediary.new("Denis", {from: accounts[0]});
-    let currency = await Currency.new("grivnya", 6, web3.utils.toBN("1000000000000000"), {from: accounts[1]});
+    intermediary = await Intermediary.new("Denis", {from: accounts[0]});
+    currency = await Currency.new("grivnya", 6, web3.utils.toBN("1000000000000000"), {from: accounts[1]});
 
     await intermediary.setCurrency(currency.address);
 
-    console.log("here");
     await currency.increaseAllowance(accounts[0], web3.utils.toBN("1000000000000000"), {from:accounts[1]});
     await currency.increaseAllowance(accounts[1], web3.utils.toBN("1000000000000000"), {from:accounts[0]});
-    console.log("and here");
+
     console.log(
       (await currency.allowance(accounts[1], accounts[0])).toString(),
       (await currency.balanceOf(accounts[1])).toString(),
       (await currency.balanceOf(accounts[0])).toString()
     );
+
     await currency.transferFrom(accounts[1], accounts[0], web3.utils.toBN("500000000000000"));
     console.log((await currency.balanceOf(accounts[0])).toString());
-
 
     console.log((await intermediary.getName()).toString());
 
@@ -31,41 +34,31 @@ contract('Intermediary', (accounts) => {
 
     let projects = [];
     let intermediaryWallet = await intermediary.getWallet();
-    for(let i = 2; i < 10; i++) {
-      projects.push(await Project.new("Project" + i, i, "This is project number " + i, 6, 1000000, {from: accounts[i]}));
-      await projects[i - 2].setIntermediary(intermediaryAddress, {from:accounts[i]});
-      await projects[i - 2].setCurrency(currency.address, {from:accounts[i]});
-    }
 
-    for(let i = 0; i < 8; i++) {
-
-      let projectInter = (await projects[i].getIntermediary()).toString();
-      console.log(projectInter, accounts[0]);
-    }
-
-    for(let project of projects) {
-      console.log((await project.getName()).toString() + " " + (await project.getDescription()).toString());
-    }
+    project = await Project.new("Project" + 2, "This is project number " + 2, 6, 1000000, {from: accounts[2]});
+    await project.setIntermediary(intermediaryAddress, {from:accounts[2]});
+    await project.setCurrency(currency.address, {from:accounts[2]});
     
-    console.log("Starting register accounts");
-    for(let project of projects) {
-      await intermediary.registerNewProject(project.address, {from:accounts[0]});
-    }
-    console.log("Finishing register accounts");
+    console.log("Starting register account");
+    await intermediary.registerNewProject(project.address, {from:accounts[0]});
+    console.log("Finishing register account");
 
     console.log("Trying to by token");
 
-    console.log((await projects[0].balanceOf(projects[0].address)).toString());
+    console.log((await project.balanceOf(project.address)).toString());
     console.log(
-      (await projects[0].allowance(projects[0].address, accounts[0])).toString(),
-      (await projects[0].allowance(accounts[0], projects[0].address)).toString()
+      (await project.allowance(project.address, accounts[0])).toString(),
+      (await project.allowance(accounts[0], project.address)).toString()
       );
 
     console.log(
       "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
       "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
       );
+
+    });
   
+    it("Intermediary tries to buy token", async () => {
 
     console.log("Intermediary buyes token");
     await intermediary.buyProjectTokenInter("Project2", 5000, {from:accounts[0]});
@@ -74,7 +67,9 @@ contract('Intermediary', (accounts) => {
       "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
       "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
       );
+    });
 
+    it("User tries to buy token", async () => {
 
     console.log("Buying...");
     await intermediary.registerNewUser(accounts[3], {from:accounts[0]});
@@ -91,6 +86,9 @@ contract('Intermediary', (accounts) => {
       "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
       "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
       );
+    });
+
+    it("User tries to sell token", async () => {
 
     console.log("Sell...");
     await intermediary.sellProjectToken("Project2", 500, {from:accounts[3]});
@@ -100,13 +98,24 @@ contract('Intermediary', (accounts) => {
       "Account - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[3]})).toString(),
       "\nAccount - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[3]})).toString()
       );
-
+    
     console.log(
       "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
       "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
       );
   });
 
+  it("Intermediary tries to sell token", async () => {
+
+    console.log("Intermediary buyes token");
+    console.log((await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString());
+    await intermediary.sellProjectTokenInter("Project2", 2000, {from:accounts[0]});
+    console.log("After intermediary bought token");
+    console.log(
+      "Intermediary - Balance for Project2 token:", (await intermediary.getBalanceForProject("Project2", {from:accounts[0]})).toString(),
+      "\nIntermediary - Balance for currency:", (await intermediary.getBalanceForCurrency({from: accounts[0]})).toString()
+      );
+  });
   
   
 });

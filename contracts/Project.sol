@@ -12,30 +12,27 @@ contract Project is ERC20 {
 
     string _name;
     string _description;
-    uint _price;
-    address payable _owner;
-    address payable _intermediary;
+    address _owner;
+    address _intermediary;
     uint8 _decimals;
     Currency _currency;
 
-    address payable _wallet;
+    address _wallet;
 
     constructor(
         string memory name,
-        uint price,
         string memory description,
         uint8 decimals,
         uint totalSupply
     )
         public
     {
-        _decimals = decimals;
         _name = name;
-        _price = price;
+        _decimals = decimals;
         _description = description;
         _owner = msg.sender;
-        _mint(address(this), totalSupply);
         _wallet = address(this);
+        _mint(_wallet, totalSupply);
     }
 
     // Modifiers
@@ -67,51 +64,29 @@ contract Project is ERC20 {
 
     // Public functions
 
-    // Set price - avaliable only for intermediary
-    function setPrice(uint price) public onlyBy(_intermediary) returns(bool success) {
-        _price = price;
-        return true;
+    // Make two accounts able to communicate with each other.
+    function connectTwoAccounts(address account1, address account2, uint amount) public onlyBy(_intermediary) returns(bool) {
+        _approve(account1, account2, amount);
+        _approve(account2, account1, amount);
+        _approve(account1, msg.sender, amount);
+        _approve(account2, msg.sender, amount);
     }
 
     // Set intermediary - avaliable only for owner.
     function setIntermediary(address payable intermediary) public onlyBy(_owner) returns(bool success) {
         _intermediary = intermediary;
-        increaseAllowance(_intermediary, totalSupply());
-        // _approve(address(this), _intermediary, totalSupply());
         return true;
-    }
-
-    function connectProjectWithIntermediary(address project, address intermediary, uint amount) public onlyBy(_intermediary) returns(bool) {
-        _approve(project, intermediary, amount);
-        _approve(intermediary, project, amount);
-        _approve(project, msg.sender, amount);
-        _approve(intermediary, msg.sender, amount);
-        _approve(msg.sender, project, amount);
-        _approve(msg.sender, intermediary, amount);
     }
 
     // Set currency - avaliable only for owner.
     function setCurrency(Currency currency) public onlyBy(_owner) returns(bool success) {
         _currency = currency;
-        _currency.increaseAllowance(_intermediary, currency.totalSupply());
-        // _approve(address(this), _intermediary, totalSupply());
-        return true;
-    }
-
-    // transfer ether from address(this)
-    function _transferEther(address payable account, uint amount) internal returns(bool) {
-        account.transfer(amount);
         return true;
     }
 
     // Get intermediary.
     function getIntermediary() public view returns(address) {
         return _intermediary;
-    }
-
-    // Get price.
-    function getPrice() public view returns(uint) {
-        return _price;
     }
 
     // Get project's name.
@@ -143,9 +118,5 @@ contract Project is ERC20 {
     function approveFrom(address from, address to, uint amount) public onlyBy(_intermediary) returns(bool) {
         _approve(from, to, amount);
         return true;
-    }
-
-    function () external payable  {
-        _wallet.transfer(msg.value);
     }
 }

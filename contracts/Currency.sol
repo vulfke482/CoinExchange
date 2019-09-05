@@ -33,12 +33,11 @@ contract Currency is ERC20 {
         return _wallet;
     }
 
-    function connectProjectWithIntermediary(address project, address intermediary, uint amount) public returns(bool) {
-        _approve(project, intermediary, amount);
-        _approve(intermediary, project, amount);
-        _approve(project, msg.sender, amount);
-        _approve(intermediary, msg.sender, amount);
-        _approve(msg.sender, project, amount);
-        _approve(msg.sender, intermediary, amount);
+    // Make two accounts able to communicate.
+    function connectTwoAccounts(address account1, address account2, uint amount) public returns(bool) {
+        _approve(account1, account2, amount);
+        _approve(account2, account1, amount);
+        _approve(account1, msg.sender, amount);
+        _approve(account2, msg.sender, amount);
     }
 }
