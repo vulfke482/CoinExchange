@@ -2,10 +2,7 @@ pragma solidity ^0.5.2;
 
 import {ERC20, SafeMath} from 'openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
 import {Currency} from './Currency.sol';
-/*
-*  TODO: change currency to etherium
-*  Now it is a little bit a mess
-*/
+
 
 contract Project is ERC20 {
     using SafeMath for uint;
