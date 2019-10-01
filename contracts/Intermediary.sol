@@ -63,15 +63,7 @@ contract Intermediary {
         if(!err) return false;
 
         projects.push(project);
-        project.connectTwoAccounts(getWallet(), project.getWallet(), project.totalSupply());
-        _currency.connectTwoAccounts(getWallet(), project.getWallet(), _currency.totalSupply());
         return true;
-    }
-
-    // Register new user to all projects.
-    function registerNewUser(address user) public onlyBy(_intermediary) returns(bool success) {
-        for(uint i = 0; i < projects.length; i++) projects[i].connectTwoAccounts(getWallet(), user, projects[i].totalSupply());
-        _currency.connectTwoAccounts(getWallet(), user, _currency.totalSupply());
     }
 
     // By project token - avaliable only for intermediary
@@ -81,8 +73,13 @@ contract Intermediary {
         if(err) return false;
 
         Project project = projects[id];
+
+        _currency.connectTwoAccounts(getWallet(), project.getWallet(), amount.mul(_price(project)));
+        project.connectTwoAccounts(getWallet(), project.getWallet(), amount);
+
         project.transferFrom(project.getWallet(), getWallet(), amount);
         _currency.transferFrom(getWallet(), project.getWallet(), amount.mul(_price(project)));
+
         return false;
     }
 
@@ -95,6 +92,10 @@ contract Intermediary {
         Project project = projects[id];
 
         require(project.balanceOf(_intermediary) >= amount, "You have not enogh project token.");
+
+
+        _currency.connectTwoAccounts(getWallet(), project.getWallet(), amount.mul(_price(project)));
+        project.connectTwoAccounts(getWallet(), project.getWallet(), amount);
 
         project.transferFrom(getWallet(), project.getWallet(), amount);
         _currency.transferFrom(project.getWallet(), getWallet(), amount.mul(_price(project)));
@@ -109,6 +110,9 @@ contract Intermediary {
 
         Project project = projects[id];
 
+        _currency.connectTwoAccounts(_intermediary, msg.sender, amount.mul(_price(project)));
+        project.connectTwoAccounts(_intermediary, msg.sender, amount);
+
         project.transferFrom(_intermediary, msg.sender, amount);
         _currency.transferFrom(msg.sender, _intermediary, amount.mul(_price(project)));
 
@@ -121,6 +125,9 @@ contract Intermediary {
         if(err) return false;
 
         Project project = projects[id];
+
+        _currency.connectTwoAccounts(_intermediary, msg.sender, amount.mul(_price(project)));
+        project.connectTwoAccounts(_intermediary, msg.sender, amount);
 
         project.transferFrom(msg.sender, getWallet(), amount);
         _currency.transferFrom(getWallet(), msg.sender, amount.mul(_price(project)));
@@ -160,12 +167,6 @@ contract Intermediary {
     }
 
     // Internal functions
-
-    // Transfer ether from contract to account
-    function _transferEther(address payable account, uint amount) internal returns (bool success) {
-        account.transfer(amount);
-        return true;
-    }
 
     // Checking String for equation
     function equalStrings(string memory firstStr, string memory secondStr) internal pure returns(bool success) {

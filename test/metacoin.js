@@ -13,6 +13,7 @@ contract('Intermediary', (accounts) => {
     intermediary = await Intermediary.new("Denis", {from: accounts[0]});
     currency = await Currency.new("grivnya", 6, web3.utils.toBN("1000000000000000"), {from: accounts[1]});
 
+    await currency.setIntermediary(intermediary.address, {from:accounts[1]});
     await intermediary.setCurrency(currency.address);
 
     await currency.increaseAllowance(accounts[0], web3.utils.toBN("1000000000000000"), {from:accounts[1]});
@@ -72,7 +73,6 @@ contract('Intermediary', (accounts) => {
     it("User tries to buy token", async () => {
 
     console.log("Buying...");
-    await intermediary.registerNewUser(accounts[3], {from:accounts[0]});
     await currency.transferFrom(accounts[1], accounts[3], 1000000);
     await intermediary.buyProjectToken("Project2", 1000, {from:accounts[3]});
 
